@@ -392,3 +392,307 @@ fn test_openapi_spec() {
     assert!(body["paths"]["/health"].is_object());
     assert!(body["paths"]["/stats/{key}"].is_object());
 }
+
+// ── Edge Case Tests ──
+
+#[test]
+fn test_submit_negative_values() {
+    let (client, key) = test_client();
+    let response = client
+        .post("/api/v1/stats")
+        .header(ContentType::JSON)
+        .header(Header::new("Authorization", format!("Bearer {}", key)))
+        .body(r#"[{"key":"temperature","value":-15.5}]"#)
+        .dispatch();
+    assert_eq!(response.status(), Status::Ok);
+    let body: serde_json::Value = response.into_json().unwrap();
+    assert_eq!(body["accepted"], 1);
+
+    // Verify it reads back correctly
+    let response = client.get("/api/v1/stats").dispatch();
+    let body: serde_json::Value = response.into_json().unwrap();
+    let stat = &body["stats"][0];
+    assert_eq!(stat["current"], -15.5);
+}
+
+#[test]
+fn test_submit_zero_value() {
+    let (client, key) = test_client();
+    let response = client
+        .post("/api/v1/stats")
+        .header(ContentType::JSON)
+        .header(Header::new("Authorization", format!("Bearer {}", key)))
+        .body(r#"[{"key":"zero_metric","value":0}]"#)
+        .dispatch();
+    assert_eq!(response.status(), Status::Ok);
+
+    let response = client.get("/api/v1/stats").dispatch();
+    let body: serde_json::Value = response.into_json().unwrap();
+    let stat = body["stats"].as_array().unwrap()
+        .iter().find(|s| s["key"] == "zero_metric").unwrap();
+    assert_eq!(stat["current"], 0.0);
+}
+
+#[test]
+fn test_submit_very_large_value() {
+    let (client, key) = test_client();
+    let response = client
+        .post("/api/v1/stats")
+        .header(ContentType::JSON)
+        .header(Header::new("Authorization", format!("Bearer {}", key)))
+        .body(r#"[{"key":"big_number","value":999999999999.99}]"#)
+        .dispatch();
+    assert_eq!(response.status(), Status::Ok);
+
+    let response = client.get("/api/v1/stats").dispatch();
+    let body: serde_json::Value = response.into_json().unwrap();
+    let stat = body["stats"].as_array().unwrap()
+        .iter().find(|s| s["key"] == "big_number").unwrap();
+    assert!(stat["current"].as_f64().unwrap() > 999_999_999_999.0);
+}
+
+#[test]
+fn test_submit_fractional_value() {
+    let (client, key) = test_client();
+    let response = client
+        .post("/api/v1/stats")
+        .header(ContentType::JSON)
+        .header(Header::new("Authorization", format!("Bearer {}", key)))
+        .body(r#"[{"key":"fraction","value":0.001}]"#)
+        .dispatch();
+    assert_eq!(response.status(), Status::Ok);
+
+    let response = client.get("/api/v1/stats").dispatch();
+    let body: serde_json::Value = response.into_json().unwrap();
+    let stat = body["stats"].as_array().unwrap()
+        .iter().find(|s| s["key"] == "fraction").unwrap();
+    assert!((stat["current"].as_f64().unwrap() - 0.001).abs() < f64::EPSILON);
+}
+
+#[test]
+fn test_submit_special_chars_in_key() {
+    let (client, key) = test_client();
+    // Underscores, hyphens, dots should work
+    let response = client
+        .post("/api/v1/stats")
+        .header(ContentType::JSON)
+        .header(Header::new("Authorization", format!("Bearer {}", key)))
+        .body(r#"[{"key":"my-metric.v2_count","value":42}]"#)
+        .dispatch();
+    assert_eq!(response.status(), Status::Ok);
+    let body: serde_json::Value = response.into_json().unwrap();
+    assert_eq!(body["accepted"], 1);
+
+    // Verify via history endpoint (key is URL path param)
+    let response = client.get("/api/v1/stats/my-metric.v2_count?period=24h").dispatch();
+    assert_eq!(response.status(), Status::Ok);
+    let body: serde_json::Value = response.into_json().unwrap();
+    assert_eq!(body["key"], "my-metric.v2_count");
+    assert_eq!(body["points"].as_array().unwrap().len(), 1);
+}
+
+#[test]
+fn test_submit_invalid_json_body() {
+    let (client, key) = test_client();
+    let response = client
+        .post("/api/v1/stats")
+        .header(ContentType::JSON)
+        .header(Header::new("Authorization", format!("Bearer {}", key)))
+        .body("this is not json")
+        .dispatch();
+    // Rocket returns 422 for malformed JSON
+    assert!(response.status() == Status::UnprocessableEntity || response.status() == Status::BadRequest);
+}
+
+#[test]
+fn test_submit_wrong_content_type() {
+    let (client, key) = test_client();
+    let response = client
+        .post("/api/v1/stats")
+        .header(ContentType::Plain)
+        .header(Header::new("Authorization", format!("Bearer {}", key)))
+        .body(r#"[{"key":"test","value":1}]"#)
+        .dispatch();
+    // Rocket returns 404 when format doesn't match (no route matches)
+    assert_ne!(response.status(), Status::Ok);
+}
+
+#[test]
+fn test_submit_object_instead_of_array() {
+    let (client, key) = test_client();
+    let response = client
+        .post("/api/v1/stats")
+        .header(ContentType::JSON)
+        .header(Header::new("Authorization", format!("Bearer {}", key)))
+        .body(r#"{"key":"test","value":1}"#)
+        .dispatch();
+    // Should reject — expects an array
+    assert_ne!(response.status(), Status::Ok);
+}
+
+#[test]
+fn test_submit_missing_value_field() {
+    let (client, key) = test_client();
+    let response = client
+        .post("/api/v1/stats")
+        .header(ContentType::JSON)
+        .header(Header::new("Authorization", format!("Bearer {}", key)))
+        .body(r#"[{"key":"test"}]"#)
+        .dispatch();
+    // Missing required field — should be rejected by serde
+    assert_ne!(response.status(), Status::Ok);
+}
+
+#[test]
+fn test_submit_missing_key_field() {
+    let (client, key) = test_client();
+    let response = client
+        .post("/api/v1/stats")
+        .header(ContentType::JSON)
+        .header(Header::new("Authorization", format!("Bearer {}", key)))
+        .body(r#"[{"value":42}]"#)
+        .dispatch();
+    // Missing required field
+    assert_ne!(response.status(), Status::Ok);
+}
+
+#[test]
+fn test_submit_large_metadata() {
+    let (client, key) = test_client();
+    // Large but valid metadata
+    let big_meta: serde_json::Value = serde_json::json!({
+        "description": "a".repeat(1000),
+        "tags": (0..50).map(|i| format!("tag_{}", i)).collect::<Vec<_>>(),
+        "nested": {"deep": {"deeper": "value"}}
+    });
+    let body = serde_json::json!([{"key": "meta_test", "value": 1, "metadata": big_meta}]);
+
+    let response = client
+        .post("/api/v1/stats")
+        .header(ContentType::JSON)
+        .header(Header::new("Authorization", format!("Bearer {}", key)))
+        .body(body.to_string())
+        .dispatch();
+    assert_eq!(response.status(), Status::Ok);
+    let body: serde_json::Value = response.into_json().unwrap();
+    assert_eq!(body["accepted"], 1);
+}
+
+#[test]
+fn test_get_history_all_periods() {
+    let (client, key) = test_client();
+
+    client
+        .post("/api/v1/stats")
+        .header(ContentType::JSON)
+        .header(Header::new("Authorization", format!("Bearer {}", key)))
+        .body(r#"[{"key":"period_test","value":99}]"#)
+        .dispatch();
+
+    // Test all valid periods
+    for period in &["24h", "7d", "30d", "90d"] {
+        let url = format!("/api/v1/stats/period_test?period={}", period);
+        let response = client.get(&url).dispatch();
+        assert_eq!(response.status(), Status::Ok, "Failed for period {}", period);
+        let body: serde_json::Value = response.into_json().unwrap();
+        assert_eq!(body["key"], "period_test");
+        assert!(body["points"].is_array());
+    }
+}
+
+#[test]
+fn test_submit_all_items_invalid() {
+    let (client, key) = test_client();
+    // All keys are empty — all should be skipped
+    let response = client
+        .post("/api/v1/stats")
+        .header(ContentType::JSON)
+        .header(Header::new("Authorization", format!("Bearer {}", key)))
+        .body(r#"[{"key":"","value":1},{"key":"","value":2}]"#)
+        .dispatch();
+    assert_eq!(response.status(), Status::Ok);
+    let body: serde_json::Value = response.into_json().unwrap();
+    assert_eq!(body["accepted"], 0);
+}
+
+#[test]
+fn test_rapid_sequential_writes() {
+    let (client, key) = test_client();
+
+    // Simulate rapid writes (like a collector posting frequently)
+    for i in 0..10 {
+        let body = format!(r#"[{{"key":"rapid","value":{}}}]"#, i);
+        let response = client
+            .post("/api/v1/stats")
+            .header(ContentType::JSON)
+            .header(Header::new("Authorization", format!("Bearer {}", key)))
+            .body(body)
+            .dispatch();
+        assert_eq!(response.status(), Status::Ok);
+    }
+
+    // Latest should be 9
+    let response = client.get("/api/v1/stats").dispatch();
+    let body: serde_json::Value = response.into_json().unwrap();
+    let stat = body["stats"].as_array().unwrap()
+        .iter().find(|s| s["key"] == "rapid").unwrap();
+    assert_eq!(stat["current"], 9.0);
+
+    // History should have all 10 points
+    let response = client.get("/api/v1/stats/rapid?period=24h").dispatch();
+    let body: serde_json::Value = response.into_json().unwrap();
+    assert_eq!(body["points"].as_array().unwrap().len(), 10);
+}
+
+#[test]
+fn test_many_different_keys() {
+    let (client, key) = test_client();
+
+    // Submit 50 different metrics in one batch
+    let stats: Vec<serde_json::Value> = (0..50)
+        .map(|i| serde_json::json!({"key": format!("metric_{:03}", i), "value": i as f64}))
+        .collect();
+
+    let response = client
+        .post("/api/v1/stats")
+        .header(ContentType::JSON)
+        .header(Header::new("Authorization", format!("Bearer {}", key)))
+        .body(serde_json::to_string(&stats).unwrap())
+        .dispatch();
+    assert_eq!(response.status(), Status::Ok);
+    let body: serde_json::Value = response.into_json().unwrap();
+    assert_eq!(body["accepted"], 50);
+
+    // All 50 should show up in GET /stats
+    let response = client.get("/api/v1/stats").dispatch();
+    let body: serde_json::Value = response.into_json().unwrap();
+    assert_eq!(body["stats"].as_array().unwrap().len(), 50);
+}
+
+#[test]
+fn test_key_label_all_known_keys() {
+    use private_dashboard::models::key_label;
+
+    // All known keys should have proper labels (not just underscore replacement)
+    let known = vec![
+        ("agents_discovered", "Agents Discovered"),
+        ("moltbook_interesting", "Moltbook Interesting"),
+        ("moltbook_spam", "Moltbook Spam"),
+        ("outreach_sent", "Outreach Sent"),
+        ("outreach_received", "Outreach Received"),
+        ("repos_count", "Repos"),
+        ("tests_total", "Total Tests"),
+        ("deploys_count", "Deploys"),
+        ("commits_total", "Total Commits"),
+        ("twitter_headlines", "Twitter Headlines"),
+        ("siblings_count", "Sibling Agents"),
+        ("siblings_active", "Siblings Active"),
+        ("moltbook_health", "Moltbook Health"),
+        ("moltbook_my_posts", "Moltbook Posts"),
+        ("twitter_accounts", "Twitter Accounts"),
+    ];
+
+    for (key, expected) in known {
+        assert_eq!(key_label(key), expected, "Label mismatch for key '{}'", key);
+    }
+}

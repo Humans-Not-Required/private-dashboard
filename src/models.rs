@@ -82,6 +82,10 @@ pub fn key_label(key: &str) -> String {
         "commits_total" => "Total Commits".into(),
         "twitter_headlines" => "Twitter Headlines".into(),
         "siblings_count" => "Sibling Agents".into(),
+        "siblings_active" => "Siblings Active".into(),
+        "moltbook_health" => "Moltbook Health".into(),
+        "moltbook_my_posts" => "Moltbook Posts".into(),
+        "twitter_accounts" => "Twitter Accounts".into(),
         _ => key.replace('_', " ").to_string(),
     }
 }
