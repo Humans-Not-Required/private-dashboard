@@ -2,9 +2,9 @@
 
 ## Current State
 
-**Phase:** Deployed to staging with full API docs  
-**Tests:** 22 passing  
-**Last Updated:** 2026-02-10 18:55 UTC
+**Phase:** Deployed to staging, collector live  
+**Tests:** 38 passing  
+**Last Updated:** 2026-02-10 19:20 UTC
 
 ## What's Done
 
@@ -19,20 +19,24 @@
 - ✅ Auto-generated manage key on first run
 - ✅ Frontend: dark theme dashboard with stat cards, sparklines, trend badges
 - ✅ Frontend: responsive grid, auto-refresh 60s, empty state
-- ✅ 22 HTTP tests (auth, submit, query, validation, trends, batch limits, key labels, llms.txt, openapi)
+- ✅ 38 HTTP tests (auth, submit, query, validation, trends, batch limits, key labels, llms.txt, openapi, edge cases)
 - ✅ Dockerfile (multi-stage: frontend + backend)
 - ✅ docker-compose.yml (port 3008)
 - ✅ Deployed to staging (192.168.0.79:3008)
 - ✅ GitHub repo created, pushed to main
 - ✅ DESIGN.md with full API spec
 - ✅ DB backup script already includes private-dashboard
+- ✅ Collector cron (every 30 min) — gathers 10 metrics from workspace state files
+- ✅ Collector script: scripts/dashboard-collector.py (in workspace)
+- ✅ Metric labels for all collector keys (siblings_active, moltbook_health, moltbook_my_posts, twitter_accounts)
+- ✅ Edge case tests: negative/zero/large/fractional values, special chars, invalid JSON, missing fields, large metadata, all periods, rapid writes, 50-key batch
 
 ## What's Next
 
 1. **GitHub Actions CI** — test + build + push to ghcr.io (needs workflow scope — blocked)
-2. **Collector cron** — Playbook that reads state files and POSTs to dashboard
-3. **Staging domain** — Add dashboard.hnrstage.xyz to Cloudflare wildcard
-4. **More edge case tests** — concurrent writes, negative values, special characters in keys
+2. **Staging domain** — Add dashboard.hnrstage.xyz to Cloudflare wildcard (Jordan action)
+3. **Frontend polish** — Better formatting for metric labels, add unit suffixes
+4. **Data retention** — Prune old data points (e.g., keep 90 days max)
 
 ## ⚠️ Gotchas
 
@@ -42,3 +46,5 @@
 - Frontend requires `bun` for Docker build (same pattern as other HNR projects)
 - openapi.json must be COPY'd in Dockerfile backend stage (include_str! needs it at compile time)
 - Currently using local Docker build on staging (no CI/ghcr.io yet)
+- Collector cron ID: 31f1ab2e-c191-4872-a9ce-f746e5d74928
+- moltbook_health reads 0 when platformHealth.status != "healthy" (check moltbook-state.json)
