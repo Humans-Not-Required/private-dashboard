@@ -1,0 +1,17 @@
+services:
+  private-dashboard:
+    image: ghcr.io/humans-not-required/private-dashboard:dev
+    container_name: private-dashboard
+    restart: unless-stopped
+    ports:
+      - "3008:8000"
+    volumes:
+      - dashboard-data:/app/data
+    environment:
+      - ROCKET_ADDRESS=0.0.0.0
+      - ROCKET_PORT=8000
+      - STATIC_DIR=/app/frontend/dist
+      - DATABASE_PATH=/app/data/dashboard.db
+
+volumes:
+  dashboard-data:
