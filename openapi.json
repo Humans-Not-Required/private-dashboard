@@ -1,7 +1,7 @@
 {
   "openapi": "3.0.3",
   "info": {
-    "title": "Private Dashboard API",
+    "title": "The Pack API",
     "description": "Local network stats dashboard for the Humans-Not-Required ecosystem. Displays key operational metrics with trend data across multiple time windows.",
     "version": "0.1.0",
     "license": { "name": "MIT" }

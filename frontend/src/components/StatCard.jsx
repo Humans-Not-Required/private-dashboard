@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Sparkline from './Sparkline';
+import { fetchStatHistory } from '../api';
 
 const PERIODS = ['24h', '7d', '30d', '90d'];
 
@@ -11,9 +12,28 @@ function formatNumber(n) {
   return n.toFixed(1);
 }
 
+function timeAgo(isoStr) {
+  if (!isoStr) return '—';
+  try {
+    const d = new Date(isoStr);
+    const now = Date.now();
+    const diffMs = now - d.getTime();
+    if (diffMs < 0) return 'just now';
+    const mins = Math.floor(diffMs / 60000);
+    if (mins < 1) return 'just now';
+    if (mins < 60) return `${mins}m ago`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `${hrs}h ago`;
+    const days = Math.floor(hrs / 24);
+    return `${days}d ago`;
+  } catch {
+    return '—';
+  }
+}
+
 function TrendBadge({ trend, period }) {
   if (!trend || trend.change === null || trend.change === undefined) {
-    return <span className="text-[11px] text-slate-600 italic">collecting…</span>;
+    return <span className="text-[11px] text-slate-600 italic">no data yet</span>;
   }
 
   const isUp = trend.change > 0;
@@ -36,6 +56,9 @@ function TrendBadge({ trend, period }) {
 
 export default function StatCard({ stat }) {
   const [period, setPeriod] = useState('24h');
+  const [periodData, setPeriodData] = useState(null);
+  const [loading, setLoading] = useState(false);
+
   const trend = stat.trends?.[period];
   const sparkColor = trend?.change > 0 ? '#34d399' : trend?.change < 0 ? '#f87171' : '#60a5fa';
 
@@ -44,18 +67,60 @@ export default function StatCard({ stat }) {
     ? 'bg-red-500'
     : trend?.change > 0 ? 'bg-emerald-500' : trend?.change < 0 ? 'bg-red-500' : 'bg-slate-600';
 
+  // Fetch per-period sparkline data when period changes
+  useEffect(() => {
+    if (period === '24h') {
+      setPeriodData(null); // Use default sparkline_24h
+      return;
+    }
+    let cancelled = false;
+    setLoading(true);
+    fetchStatHistory(stat.key, period).then(data => {
+      if (!cancelled && data.points) {
+        setPeriodData(data.points);
+      }
+      setLoading(false);
+    }).catch(() => {
+      if (!cancelled) setLoading(false);
+    });
+    return () => { cancelled = true; };
+  }, [stat.key, period]);
+
+  // Determine sparkline data based on period
+  let sparkData, sparkTimestamps;
+  if (period === '24h' || !periodData) {
+    sparkData = stat.sparkline_24h;
+    sparkTimestamps = null; // No timestamps for default sparkline
+  } else {
+    // Downsample to 24 points max for readability
+    const maxPts = 24;
+    if (periodData.length <= maxPts) {
+      sparkData = periodData.map(p => p.value);
+      sparkTimestamps = periodData.map(p => p.recorded_at);
+    } else {
+      const step = periodData.length / maxPts;
+      sparkData = [];
+      sparkTimestamps = [];
+      for (let i = 0; i < maxPts; i++) {
+        const idx = Math.min(Math.floor(i * step), periodData.length - 1);
+        sparkData.push(periodData[idx].value);
+        sparkTimestamps.push(periodData[idx].recorded_at);
+      }
+    }
+  }
+
   return (
-    <div className="bg-slate-900/80 border border-slate-800/60 rounded-xl p-4 flex flex-col min-h-0 hover:border-slate-700/60 transition-colors">
+    <div className="bg-slate-900/80 border border-slate-800/60 rounded-xl px-4 pt-3 pb-2 flex flex-col min-h-0 hover:border-slate-700/60 transition-colors">
       {/* Header row */}
       <div className="flex items-center justify-between flex-shrink-0 mb-1">
         <div className="flex items-center gap-2">
           <div className={`w-1.5 h-1.5 rounded-full ${dotColor}`} />
-          <h3 className="text-xs font-medium text-slate-400 uppercase tracking-wider">
+          <h3 className="text-xs font-medium text-slate-400 uppercase tracking-wider truncate">
             {stat.label}
           </h3>
         </div>
-        {/* Period selector — inline */}
-        <div className="flex gap-0.5">
+        {/* Period selector */}
+        <div className="flex gap-0.5 flex-shrink-0">
           {PERIODS.map(p => (
             <button
               key={p}
@@ -80,16 +145,19 @@ export default function StatCard({ stat }) {
         <TrendBadge trend={trend} period={period} />
       </div>
 
-      {/* Sparkline — fills remaining space */}
-      <div className="flex-1 mt-2 min-h-0">
-        <Sparkline data={stat.sparkline_24h} color={sparkColor} />
+      {/* Sparkline — fills remaining space, edge-to-edge */}
+      <div className="flex-1 mt-1 -mx-4 min-h-0 relative">
+        {loading && (
+          <div className="absolute inset-0 flex items-center justify-center z-10">
+            <span className="text-[10px] text-slate-600">loading…</span>
+          </div>
+        )}
+        <Sparkline data={sparkData} color={sparkColor} timestamps={sparkTimestamps} />
       </div>
 
-      {/* Last updated */}
-      <div className="text-[10px] text-slate-700 mt-1 flex-shrink-0">
-        {stat.last_updated
-          ? new Date(stat.last_updated).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-          : '—'}
+      {/* Last updated — relative time */}
+      <div className="text-[10px] text-slate-700 mt-0.5 flex-shrink-0">
+        {timeAgo(stat.last_updated)}
       </div>
     </div>
   );

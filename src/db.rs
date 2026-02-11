@@ -74,6 +74,16 @@ impl Db {
         ).ok()
     }
 
+    /// Get the earliest stat value at or after a given time (fallback for trends when no data before window start)
+    pub fn get_earliest_stat_since(&self, key: &str, since: &str) -> Option<f64> {
+        let conn = self.conn.lock().unwrap();
+        conn.query_row(
+            "SELECT value FROM stats WHERE key = ?1 AND recorded_at >= ?2 ORDER BY recorded_at ASC LIMIT 1",
+            params![key, since],
+            |row| row.get(0),
+        ).ok()
+    }
+
     pub fn get_stat_history(&self, key: &str, since: &str) -> Vec<StatPoint> {
         let conn = self.conn.lock().unwrap();
         let mut stmt = conn.prepare(

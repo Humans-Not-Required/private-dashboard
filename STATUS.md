@@ -4,7 +4,7 @@
 
 **Phase:** Deployed to staging, collector live, data retention active  
 **Tests:** 47 passing  
-**Last Updated:** 2026-02-11 03:40 UTC
+**Last Updated:** 2026-02-11 04:25 UTC
 
 ## What's Done
 
@@ -34,6 +34,7 @@
 - ✅ Edge case tests: negative/zero/large/fractional values, special chars, invalid JSON, missing fields, large metadata, all periods, rapid writes, 50-key batch
 - ✅ Data retention: 90-day auto-prune on startup + manual prune endpoint + 9 prune tests
 - ✅ UI/UX overhaul: viewport-filling layout, responsive sparklines, improved labels, better trend display
+- ✅ Custom SVG logo and favicon (ascending bar chart design, dark theme matching)
 
 ## What's Next
 

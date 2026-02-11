@@ -403,7 +403,7 @@ fn test_llms_txt() {
     let response = client.get("/llms.txt").dispatch();
     assert_eq!(response.status(), Status::Ok);
     let body = response.into_string().unwrap();
-    assert!(body.contains("Private Dashboard"));
+    assert!(body.contains("The Pack"));
     assert!(body.contains("POST /api/v1/stats"));
     assert!(body.contains("GET /api/v1/stats"));
     assert!(body.contains("manage_key"));
@@ -416,7 +416,7 @@ fn test_openapi_spec() {
     assert_eq!(response.status(), Status::Ok);
     let body: serde_json::Value = response.into_json().unwrap();
     assert_eq!(body["openapi"], "3.0.3");
-    assert_eq!(body["info"]["title"], "Private Dashboard API");
+    assert_eq!(body["info"]["title"], "The Pack API");
     assert!(body["paths"]["/stats"].is_object());
     assert!(body["paths"]["/health"].is_object());
     assert!(body["paths"]["/stats/{key}"].is_object());

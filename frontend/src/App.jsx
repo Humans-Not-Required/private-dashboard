@@ -41,9 +41,9 @@ export default function App() {
       {/* Header — compact */}
       <header className="flex items-center justify-between mb-3 flex-shrink-0">
         <div className="flex items-center gap-3">
-          <img src="/logo.svg" alt="HNR Dashboard" className="h-7 w-7" />
-          <h1 className="text-lg font-semibold tracking-tight">HNR Dashboard</h1>
-          <span className="text-xs text-slate-600">Humans Not Required</span>
+          <img src="/logo.svg" alt="The Pack" className="h-7 w-7" />
+          <h1 className="text-lg font-semibold tracking-tight">The Pack</h1>
+          <span className="text-xs text-slate-600">Agent Operations</span>
         </div>
         <div className="flex items-center gap-4 text-xs text-slate-500">
           {health && (

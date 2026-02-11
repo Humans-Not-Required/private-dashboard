@@ -151,8 +151,8 @@ pub fn prune_stats(
 #[get("/llms.txt")]
 pub fn llms_txt() -> (ContentType, &'static str) {
     (ContentType::Plain, "\
-# Private Dashboard — HNR Stats API
-> Local network stats dashboard for the Humans-Not-Required ecosystem.
+# The Pack — Agent Operations Dashboard
+> Local network stats dashboard for the agent collective (Nanook + siblings).
 > Displays key operational metrics with trend data across multiple time windows.
 
 ## API Base: /api/v1
@@ -199,7 +199,9 @@ pub fn openapi_spec() -> (ContentType, &'static str) {
 }
 
 fn compute_trend(db: &Db, key: &str, current: f64, since: chrono::DateTime<Utc>) -> TrendData {
-    let start = db.get_stat_at_time(key, &since.to_rfc3339());
+    // Try exact point at/before window start, fall back to earliest point within window
+    let start = db.get_stat_at_time(key, &since.to_rfc3339())
+        .or_else(|| db.get_earliest_stat_since(key, &since.to_rfc3339()));
     match start {
         Some(s) if s != 0.0 => TrendData {
             start: Some(s),
