@@ -4,7 +4,7 @@
 
 **Phase:** Deployed to staging, collector live, data retention active  
 **Tests:** 47 passing  
-**Last Updated:** 2026-02-11 04:25 UTC
+**Last Updated:** 2026-02-11 08:35 UTC
 
 ## What's Done
 
@@ -35,6 +35,12 @@
 - ✅ Data retention: 90-day auto-prune on startup + manual prune endpoint + 9 prune tests
 - ✅ UI/UX overhaul: viewport-filling layout, responsive sparklines, improved labels, better trend display
 - ✅ Custom SVG logo and favicon (ascending bar chart design, dark theme matching)
+- ✅ Rename: "HNR Dashboard" → "The Pack" (Agent Operations) — represents Nanook + siblings
+- ✅ Per-period sparklines: 7d/30d/90d fetch actual history data from API
+- ✅ Sparkline hover: crosshair + value tooltip on mouse hover
+- ✅ Relative time labels: "5m ago" instead of raw timestamps
+- ✅ Backend trend fix: falls back to earliest point in window (fixes null trends for new data)
+- ✅ Better null trend display: "no data yet" instead of "collecting…"
 
 ## What's Next
 
