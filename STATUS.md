@@ -44,9 +44,9 @@
 
 ## What's Next
 
-1. **Add to /mylinks page** — Jordan wants the private dashboard linked on hnrstage.xyz/mylinks (Jordan direction 2026-02-10)
+1. **Add to /mylinks page** — Jordan wants the private dashboard linked on <staging-domain>/mylinks (Jordan direction 2026-02-10)
 2. **GitHub Actions CI** — test + build + push to ghcr.io (needs workflow scope — blocked)
-3. **Staging domain** — Add dashboard.hnrstage.xyz to Cloudflare wildcard (Jordan action)
+3. **Staging domain** — Add dashboard.<staging-domain> to Cloudflare wildcard (Jordan action)
 4. **Unit suffixes** — Add contextual units to metrics (e.g., "656 agents", "444 commits")
 
 ## ⚠️ Gotchas
