@@ -4,6 +4,59 @@ import StatCard from './components/StatCard';
 
 const REFRESH_INTERVAL = 60_000; // 60 seconds
 
+// Metric grouping: ordered groups with their metric keys
+const METRIC_GROUPS = [
+  {
+    id: 'development',
+    label: 'Development',
+    icon: '⚡',
+    keys: ['repos_count', 'commits_total', 'tests_total'],
+  },
+  {
+    id: 'network',
+    label: 'Network',
+    icon: '🌐',
+    keys: ['agents_discovered', 'siblings_active', 'siblings_count'],
+  },
+  {
+    id: 'moltbook',
+    label: 'Moltbook',
+    icon: '📘',
+    keys: ['moltbook_health', 'moltbook_interesting', 'moltbook_my_posts', 'moltbook_spam'],
+  },
+  {
+    id: 'social',
+    label: 'Social',
+    icon: '📡',
+    keys: ['twitter_headlines', 'twitter_accounts', 'outreach_sent', 'outreach_received'],
+  },
+];
+
+// Build grouped stats from flat array
+function groupStats(stats) {
+  const byKey = {};
+  for (const s of stats) byKey[s.key] = s;
+
+  const grouped = [];
+  const placed = new Set();
+
+  for (const group of METRIC_GROUPS) {
+    const items = group.keys.map(k => byKey[k]).filter(Boolean);
+    if (items.length > 0) {
+      grouped.push({ ...group, stats: items });
+      items.forEach(s => placed.add(s.key));
+    }
+  }
+
+  // Any ungrouped metrics go into "Other"
+  const other = stats.filter(s => !placed.has(s.key));
+  if (other.length > 0) {
+    grouped.push({ id: 'other', label: 'Other', icon: '📊', stats: other });
+  }
+
+  return grouped;
+}
+
 export default function App() {
   const [stats, setStats] = useState([]);
   const [health, setHealth] = useState(null);
@@ -31,17 +84,7 @@ export default function App() {
     return () => clearInterval(interval);
   }, []);
 
-  // Calculate grid layout based on number of cards
-  const count = stats.length;
-  const cols = count <= 4 ? 2 : count <= 6 ? 3 : count <= 9 ? 3 : 4;
-  const rows = Math.ceil(count / cols);
-
-  // Responsive grid classes: 1 col mobile, 2 col tablet, dynamic on desktop
-  const desktopColClass = cols <= 2
-    ? 'lg:grid-cols-2'
-    : cols <= 3
-      ? 'lg:grid-cols-3'
-      : 'lg:grid-cols-3 xl:grid-cols-4';
+  const groups = groupStats(stats);
 
   return (
     <div className="min-h-screen lg:h-screen overflow-y-auto lg:overflow-hidden bg-slate-950 text-white flex flex-col p-3 sm:p-4">
@@ -65,7 +108,7 @@ export default function App() {
         </div>
       </header>
 
-      {/* Stats Grid — scrollable on mobile, fills viewport on desktop */}
+      {/* Stats — grouped layout */}
       {stats.length === 0 ? (
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
@@ -78,12 +121,28 @@ export default function App() {
           </div>
         </div>
       ) : (
-        <div
-          className={`flex-1 dashboard-grid grid gap-2 sm:gap-3 grid-cols-1 sm:grid-cols-2 ${desktopColClass} min-h-0`}
-          style={{ '--grid-rows': rows }}
-        >
-          {stats.map(stat => (
-            <StatCard key={stat.key} stat={stat} />
+        <div className="flex-1 flex flex-col gap-3 sm:gap-4 min-h-0 overflow-y-auto lg:overflow-hidden">
+          {groups.map(group => (
+            <div key={group.id} className="flex-1 min-h-0 flex flex-col">
+              {/* Group label */}
+              <div className="flex items-center gap-2 mb-1.5 flex-shrink-0">
+                <span className="text-[11px] sm:text-xs">{group.icon}</span>
+                <span className="text-[10px] sm:text-[11px] font-medium text-slate-600 uppercase tracking-widest">
+                  {group.label}
+                </span>
+                <div className="flex-1 h-px bg-slate-800/60" />
+              </div>
+              {/* Group cards */}
+              <div className={`flex-1 grid gap-2 sm:gap-3 grid-cols-1 sm:grid-cols-2 min-h-0 ${
+                group.stats.length <= 2 ? 'lg:grid-cols-2' :
+                group.stats.length === 3 ? 'lg:grid-cols-3' :
+                'lg:grid-cols-4'
+              }`}>
+                {group.stats.map(stat => (
+                  <StatCard key={stat.key} stat={stat} />
+                ))}
+              </div>
+            </div>
           ))}
         </div>
       )}

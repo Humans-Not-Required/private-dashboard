@@ -10,6 +10,7 @@ const UNIT_MAP = {
   moltbook_interesting: 'items',
   moltbook_health: '', // binary — handled specially
   moltbook_my_posts: 'posts',
+  moltbook_spam: 'posts',
   twitter_headlines: 'tweets',
   twitter_accounts: 'accounts',
   outreach_sent: 'sent',
@@ -18,7 +19,26 @@ const UNIT_MAP = {
   commits_total: 'commits',
   tests_total: 'tests',
   siblings_active: 'online',
+  siblings_count: 'agents',
 };
+
+// Binary metrics: show status text instead of numbers
+const BINARY_METRICS = {
+  moltbook_health: {
+    on: { text: 'Healthy', color: 'text-emerald-400', dot: 'bg-emerald-500' },
+    off: { text: 'Down', color: 'text-red-400', dot: 'bg-red-500' },
+  },
+};
+
+function isBinaryMetric(key) {
+  return key in BINARY_METRICS;
+}
+
+function getBinaryDisplay(key, value) {
+  const config = BINARY_METRICS[key];
+  if (!config) return null;
+  return value >= 1 ? config.on : config.off;
+}
 
 function getUnit(key) {
   return UNIT_MAP[key] || '';
@@ -80,11 +100,12 @@ export default function StatCard({ stat }) {
   const [loading, setLoading] = useState(false);
 
   const trend = stat.trends?.[period];
+  const binary = getBinaryDisplay(stat.key, stat.current);
   const sparkColor = trend?.change > 0 ? '#34d399' : trend?.change < 0 ? '#f87171' : '#60a5fa';
 
   // Status indicator dot color
-  const dotColor = stat.current === 0 && stat.key.includes('health')
-    ? 'bg-red-500'
+  const dotColor = binary
+    ? binary.dot
     : trend?.change > 0 ? 'bg-emerald-500' : trend?.change < 0 ? 'bg-red-500' : 'bg-slate-600';
 
   // Fetch per-period sparkline data when period changes
@@ -159,13 +180,21 @@ export default function StatCard({ stat }) {
 
       {/* Big number + unit + trend */}
       <div className="flex items-baseline gap-2 sm:gap-3 flex-shrink-0">
-        <span className="text-2xl sm:text-3xl font-bold text-white tabular-nums leading-tight">
-          {formatNumber(stat.current)}
-        </span>
-        {getUnit(stat.key) && (
-          <span className="text-xs sm:text-sm text-slate-500 font-medium -ml-1">
-            {getUnit(stat.key)}
+        {binary ? (
+          <span className={`text-2xl sm:text-3xl font-bold leading-tight ${binary.color}`}>
+            {binary.text}
           </span>
+        ) : (
+          <>
+            <span className="text-2xl sm:text-3xl font-bold text-white tabular-nums leading-tight">
+              {formatNumber(stat.current)}
+            </span>
+            {getUnit(stat.key) && (
+              <span className="text-xs sm:text-sm text-slate-500 font-medium -ml-1">
+                {getUnit(stat.key)}
+              </span>
+            )}
+          </>
         )}
         <TrendBadge trend={trend} period={period} />
       </div>
