@@ -71,6 +71,26 @@ function timeAgo(isoStr) {
   }
 }
 
+// Trend alert thresholds
+const ALERT_THRESHOLD = 10;  // ±10% → alert (pulsing dot)
+const HOT_THRESHOLD = 25;    // ±25% → hot (glow border + pulse)
+
+function getTrendAlertLevel(stat) {
+  // Always check the 24h trend for alerts (most recent signal)
+  const trend24h = stat.trends?.['24h'];
+  if (!trend24h || trend24h.pct === null || trend24h.pct === undefined) return null;
+  const absPct = Math.abs(trend24h.pct);
+  if (absPct >= HOT_THRESHOLD) return 'hot';
+  if (absPct >= ALERT_THRESHOLD) return 'alert';
+  return null;
+}
+
+function getTrendDirection(stat) {
+  const trend24h = stat.trends?.['24h'];
+  if (!trend24h || !trend24h.change) return 'neutral';
+  return trend24h.change > 0 ? 'up' : 'down';
+}
+
 function TrendBadge({ trend, period }) {
   if (!trend || trend.change === null || trend.change === undefined) {
     return <span className="text-[11px] text-slate-600 italic">no data yet</span>;
@@ -103,10 +123,25 @@ export default function StatCard({ stat }) {
   const binary = getBinaryDisplay(stat.key, stat.current);
   const sparkColor = trend?.change > 0 ? '#34d399' : trend?.change < 0 ? '#f87171' : '#60a5fa';
 
+  // Trend alert detection
+  const alertLevel = getTrendAlertLevel(stat);
+  const alertDir = getTrendDirection(stat);
+
   // Status indicator dot color
   const dotColor = binary
     ? binary.dot
     : trend?.change > 0 ? 'bg-emerald-500' : trend?.change < 0 ? 'bg-red-500' : 'bg-slate-600';
+
+  // Alert classes
+  const dotAlert = alertLevel ? 'alert-dot' : '';
+  const cardGlow = alertLevel === 'hot'
+    ? (alertDir === 'up' ? 'alert-glow-up' : alertDir === 'down' ? 'alert-glow-down' : '')
+    : '';
+  const borderAlert = alertLevel === 'hot'
+    ? (alertDir === 'up' ? 'border-emerald-800/40' : alertDir === 'down' ? 'border-red-800/40' : '')
+    : alertLevel === 'alert'
+    ? (alertDir === 'up' ? 'border-emerald-900/30' : alertDir === 'down' ? 'border-red-900/30' : '')
+    : '';
 
   // Fetch per-period sparkline data when period changes
   useEffect(() => {
@@ -151,11 +186,11 @@ export default function StatCard({ stat }) {
   }
 
   return (
-    <div className="bg-slate-900/80 border border-slate-800/60 rounded-xl px-3 sm:px-4 pt-3 pb-2 flex flex-col min-h-[140px] lg:min-h-0 hover:border-slate-700/60 transition-colors">
+    <div className={`bg-slate-900/80 border rounded-xl px-3 sm:px-4 pt-3 pb-2 flex flex-col min-h-[140px] lg:min-h-0 hover:border-slate-700/60 transition-colors ${borderAlert || 'border-slate-800/60'} ${cardGlow}`}>
       {/* Header row */}
       <div className="flex items-center justify-between flex-shrink-0 mb-1">
         <div className="flex items-center gap-2 min-w-0">
-          <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${dotColor}`} />
+          <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${dotColor} ${dotAlert}`} />
           <h3 className="text-[11px] sm:text-xs font-medium text-slate-400 uppercase tracking-wider truncate">
             {stat.label}
           </h3>
@@ -195,6 +230,9 @@ export default function StatCard({ stat }) {
               </span>
             )}
           </>
+        )}
+        {alertLevel === 'hot' && (
+          <span className="text-[11px] opacity-80" title={`${Math.abs(stat.trends?.['24h']?.pct || 0).toFixed(0)}% change in 24h`}>⚡</span>
         )}
         <TrendBadge trend={trend} period={period} />
       </div>
