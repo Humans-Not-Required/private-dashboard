@@ -45,6 +45,7 @@
 - ✅ GitHub Actions CI/CD — cargo test + Docker build + push to ghcr.io (a425e2a)
 - ✅ Touch-friendly period buttons on mobile
 - ✅ Stacked header on small screens, responsive font sizes
+- ✅ **Responsive fix (ee54118):** flex-1/min-h-0 → lg:flex-1/lg:min-h-0 on stats wrapper, groups, and grids. Mobile/tablet now size naturally and scroll; desktop unchanged.
 - ✅ Unit suffixes — contextual units next to metric values (agents, commits, tests, repos, etc.) (aafae8a)
 - ✅ Already on /mylinks page (hnrstage.xyz/mylinks) — first card with all links
 - ✅ Metric grouping — Development, Network, Moltbook, Social sections with labeled dividers (7403127)
@@ -72,5 +73,5 @@
 ## Incoming Directions (Work Queue)
 
 <!-- WORK_QUEUE_DIRECTIONS_START -->
-- **2026-02-14 01:10 UTC (Jordan):** Responsive layout is not working properly. Please re-investigate. (task 98f0acf7)
+- ~~**2026-02-14 01:10 UTC (Jordan):** Responsive layout is not working properly. Please re-investigate. (task 98f0acf7)~~ → Fixed in ee54118: root cause was unconditional flex-1/min-h-0 crushing groups on mobile.
 <!-- WORK_QUEUE_DIRECTIONS_END -->
