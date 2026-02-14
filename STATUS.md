@@ -4,7 +4,7 @@
 
 **Phase:** Deployed to staging, collector live, data retention active  
 **Tests:** 47 passing  
-**Last Updated:** 2026-02-14 01:10 UTC
+**Last Updated:** 2026-02-14 01:37 UTC
 
 ## What's Done
 
@@ -51,12 +51,13 @@
 - ✅ Metric grouping — Development, Network, Moltbook, Social sections with labeled dividers (7403127)
 - ✅ Binary metric display — moltbook_health shows "Healthy"/"Down" with color instead of 1/0 (7403127)
 - ✅ Trend alerts — pulsing dot + glow border for significant 24h changes (±10% alert, ±25% hot with ⚡) (f0ea09d)
+- ✅ **Metric detail view** — click any card for full modal with interactive chart, trend summaries, data table (6e14145)
 
 ## What's Next
 
 1. **Staging domain** — Add dashboard.<staging-domain> to Cloudflare wildcard (Jordan action)
-2. **Metric detail view** — Click a card to expand full history chart
-3. **Alert history log** — Track when metrics triggered alerts (optional)
+2. **Alert history log** — Track when metrics triggered alerts (optional)
+3. **Custom date range** — Allow selecting arbitrary start/end dates in detail view
 
 ## ⚠️ Gotchas
 
