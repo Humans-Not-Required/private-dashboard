@@ -3,8 +3,8 @@
 ## Current State
 
 **Phase:** Deployed to staging, collector live, data retention active  
-**Tests:** 53 passing  
-**Last Updated:** 2026-02-14 02:25 UTC
+**Tests:** 59 passing  
+**Last Updated:** 2026-02-14 03:12 UTC
 
 ## What's Done
 
@@ -53,6 +53,7 @@
 - ✅ Trend alerts — pulsing dot + glow border for significant 24h changes (±10% alert, ±25% hot with ⚡) (f0ea09d)
 - ✅ **Metric detail view** — click any card for full modal with interactive chart, trend summaries, data table (6e14145)
 - ✅ **Custom date range** — "Custom" period option with date pickers; backend accepts start/end params (ISO-8601 or YYYY-MM-DD); 6 new tests (74f445a)
+- ✅ **DELETE /api/v1/stats/:key** — Auth-required metric cleanup endpoint; deletes all data for a key; 404 for nonexistent, 403 for bad auth; 6 new tests (7e5376f)
 
 ## What's Next
 
