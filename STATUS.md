@@ -3,8 +3,8 @@
 ## Current State
 
 **Phase:** Deployed to staging, collector live, data retention active  
-**Tests:** 59 passing  
-**Last Updated:** 2026-02-14 03:30 UTC
+**Tests:** 68 passing  
+**Last Updated:** 2026-02-14 03:50 UTC
 
 ## What's Done
 
@@ -56,11 +56,12 @@
 - ✅ **DELETE /api/v1/stats/:key** — Auth-required metric cleanup endpoint; deletes all data for a key; 404 for nonexistent, 403 for bad auth; 6 new tests (7e5376f)
 - ✅ **Period button click fix** — stopPropagation on StatCard period buttons so clicking period doesn't open modal (c9436ab)
 - ✅ **CSV export** — Download button in MetricDetail data table exports timestamp+value pairs as CSV (c9436ab)
+- ✅ **Alert history log** — `alert_log` table auto-records significant metric changes on submit; GET /api/v1/alerts with key filter + limit; 10%=alert, 25%=hot, 6h debounce; 9 new tests (2465027)
 
 ## What's Next
 
 1. **Staging domain** — Add dashboard.<staging-domain> to Cloudflare wildcard (Jordan action)
-2. **Alert history log** — Track when metrics triggered alerts (optional)
+2. **Frontend alert history panel** — Show recent alerts in the UI (optional)
 
 ## ⚠️ Gotchas
 
