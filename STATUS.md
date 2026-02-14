@@ -4,7 +4,7 @@
 
 **Phase:** Deployed to staging, collector live, data retention active  
 **Tests:** 68 passing  
-**Last Updated:** 2026-02-14 04:55 UTC
+**Last Updated:** 2026-02-14 19:35 UTC
 
 ## What's Done
 
@@ -60,6 +60,8 @@
 - ✅ **Frontend alert history panel** — 🔔 Recent Alerts section below stats grid; color-coded by level (hot=⚡, alert=dot) and direction; expand/collapse for >5 alerts; responsive; auto-refreshes with 60s interval (fbeb7db)
 - ✅ **cron_jobs_active metric** — label, unit suffix ("jobs"), Network group in frontend (17cc44e)
 - ✅ **Kanban board metrics** — 6 new metrics (backlog, up_next, in_progress, review, done, active) with "Work Queue" group, labels, units, tests (1ce57c8)
+
+- ✅ **Full-viewport modal on mobile** — MetricDetail modal now fills entire screen on mobile (no padding, no rounded corners, full height); desktop unchanged (4a2a60e)
 
 ## What's Next
 
