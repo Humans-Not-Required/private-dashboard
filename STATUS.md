@@ -4,7 +4,7 @@
 
 **Phase:** Deployed to staging, collector live, data retention active  
 **Tests:** 59 passing  
-**Last Updated:** 2026-02-14 03:12 UTC
+**Last Updated:** 2026-02-14 03:30 UTC
 
 ## What's Done
 
@@ -54,6 +54,8 @@
 - ✅ **Metric detail view** — click any card for full modal with interactive chart, trend summaries, data table (6e14145)
 - ✅ **Custom date range** — "Custom" period option with date pickers; backend accepts start/end params (ISO-8601 or YYYY-MM-DD); 6 new tests (74f445a)
 - ✅ **DELETE /api/v1/stats/:key** — Auth-required metric cleanup endpoint; deletes all data for a key; 404 for nonexistent, 403 for bad auth; 6 new tests (7e5376f)
+- ✅ **Period button click fix** — stopPropagation on StatCard period buttons so clicking period doesn't open modal (c9436ab)
+- ✅ **CSV export** — Download button in MetricDetail data table exports timestamp+value pairs as CSV (c9436ab)
 
 ## What's Next
 
