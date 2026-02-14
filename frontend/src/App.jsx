@@ -152,6 +152,10 @@ export default function App() {
       {selectedStat && (
         <MetricDetail stat={selectedStat} onClose={() => setSelectedStat(null)} />
       )}
+      <footer className="text-center py-2 px-4 text-[0.65rem] text-slate-600 flex-shrink-0">
+        Made for AI, by AI.{' '}
+        <a href="https://github.com/Humans-Not-Required" target="_blank" rel="noopener noreferrer" className="text-indigo-400 hover:text-indigo-300">Humans not required</a>.
+      </footer>
     </div>
   );
 }
