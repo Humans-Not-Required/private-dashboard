@@ -235,6 +235,19 @@ function DetailChart({ data, timestamps, color }) {
   );
 }
 
+function exportCSV(key, points) {
+  if (!points || points.length === 0) return;
+  const header = 'timestamp,value\n';
+  const rows = points.map(p => `${p.recorded_at},${p.value}`).join('\n');
+  const blob = new Blob([header + rows], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${key}-export.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 function getDefaultDateRange() {
   const end = new Date();
   const start = new Date();
@@ -434,9 +447,18 @@ export default function MetricDetail({ stat, onClose }) {
           {/* Data points table (last 10) */}
           {historyData && historyData.length > 0 && (
             <div>
-              <h3 className="text-[11px] font-medium text-slate-500 uppercase tracking-wider mb-2">
-                Recent Data Points ({historyData.length} total in {period === 'custom' ? `${customStart} — ${customEnd}` : period})
-              </h3>
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">
+                  Recent Data Points ({historyData.length} total in {period === 'custom' ? `${customStart} — ${customEnd}` : period})
+                </h3>
+                <button
+                  onClick={() => exportCSV(stat.key, historyData)}
+                  className="text-[10px] text-slate-500 hover:text-slate-300 bg-slate-800/60 hover:bg-slate-800 border border-slate-700/40 rounded-md px-2 py-1 transition-colors"
+                  title="Export as CSV"
+                >
+                  ⬇ CSV
+                </button>
+              </div>
               <div className="rounded-lg border border-slate-800/40 overflow-hidden">
                 <table className="w-full text-xs">
                   <thead>

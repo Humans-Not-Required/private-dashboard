@@ -203,7 +203,7 @@ export default function StatCard({ stat, onClick }) {
           {PERIODS.map(p => (
             <button
               key={p}
-              onClick={() => setPeriod(p)}
+              onClick={(e) => { e.stopPropagation(); setPeriod(p); }}
               className={`period-btn text-[10px] sm:text-[10px] px-1.5 sm:px-1.5 py-1 sm:py-0.5 rounded transition-colors ${
                 p === period
                   ? 'bg-slate-700 text-white'
